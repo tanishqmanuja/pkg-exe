@@ -12,5 +12,7 @@
 		],
 		"outputPath": "bin",
 		"assets": []
-	}
+	},
+	"pkgcache": ".pkg-cache",
+	"pkgcompression": "default"
 }
