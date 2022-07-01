@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -13,44 +12,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const child_process_1 = require("child_process");
-const fs_1 = require("fs");
 const path_1 = require("path");
 const process_1 = require("process");
 const yargs_1 = __importDefault(require("yargs"));
 const helpers_1 = require("yargs/helpers");
-const init_1 = require("./utils/init");
+const build_1 = require("../utils/build");
 const main = (argv) => __awaiter(void 0, void 0, void 0, function* () {
-    if (argv.hasOwnProperty("init")) {
-        try {
-            (0, init_1.init)();
-            console.log("> Initialized successfully");
-        }
-        catch (error) {
-            console.log("> initialization Failed");
-        }
-    }
-    if (argv.hasOwnProperty("build")) {
-        console.log("> Starting Build");
-        try {
-            const configFilePath = (0, path_1.join)((0, process_1.cwd)(), argv.config);
-            const configRaw = (0, fs_1.readFileSync)(configFilePath, "utf8");
-            const config = JSON.parse(configRaw);
-            if (config.pkgcache) {
-                process.env.PKG_CACHE_PATH = (0, path_1.join)((0, process_1.cwd)(), config.pkgcache);
-            }
-            (0, child_process_1.execSync)(`node \"${(0, path_1.join)(__dirname, "../bin/libs/build.js")}\" -c ${argv.config}`, Object.assign({ env: process.env }, (argv.debug ? { stdio: "inherit" } : {})));
-            console.log("> Build Successful");
-        }
-        catch (error) {
-            console.log("> Build Failed");
-        }
-    }
+    const configFilePath = (0, path_1.join)((0, process_1.cwd)(), argv.config);
+    yield (0, build_1.build)(configFilePath);
 });
 const argv = (0, yargs_1.default)((0, helpers_1.hideBin)(process.argv)).option({
-    init: { alias: "i" },
-    build: { alias: "b" },
     config: { type: "string", alias: "c", default: "./pkg.config.json" },
-    debug: { type: "boolean", alias: "d" },
 }).argv;
 main(argv);

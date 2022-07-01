@@ -2,7 +2,6 @@ import { existsSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import { exec } from "pkg";
 import { need } from "pkg-fetch";
-import { cwd } from "process";
 import { Data, NtExecutable, NtExecutableResource, Resource } from "resedit";
 
 export interface Config {
@@ -25,10 +24,6 @@ export interface Config {
 export const build = async (configFilePath: string) => {
 	const configRaw = readFileSync(configFilePath, "utf8");
 	const config: Config = JSON.parse(configRaw);
-
-	if (config.pkgcache) {
-		process.env.PKG_CACHE_PATH = join(cwd(), config.pkgcache);
-	}
 
 	const { pkg, icon, version, description, company, name, copyright, file } =
 		config;

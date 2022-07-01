@@ -14,14 +14,10 @@ const fs_1 = require("fs");
 const path_1 = require("path");
 const pkg_1 = require("pkg");
 const pkg_fetch_1 = require("pkg-fetch");
-const process_1 = require("process");
 const resedit_1 = require("resedit");
 const build = (configFilePath) => __awaiter(void 0, void 0, void 0, function* () {
     const configRaw = (0, fs_1.readFileSync)(configFilePath, "utf8");
     const config = JSON.parse(configRaw);
-    if (config.pkgcache) {
-        process.env.PKG_CACHE_PATH = (0, path_1.join)((0, process_1.cwd)(), config.pkgcache);
-    }
     const { pkg, icon, version, description, company, name, copyright, file } = config;
     const targets = pkg.targets[0].split("-");
     console.log("> Download Binaries");
