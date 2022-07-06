@@ -11,8 +11,8 @@
 			"node16-win-x64"
 		],
 		"outputPath": "bin",
-		"assets": []
-	},
-	"pkgcache": ".pkg-cache",
-	"pkgcompression": "default"
+		"assets": [],
+		"cache": ".pkg-cache",
+		"compression": "default"
+	}
 }

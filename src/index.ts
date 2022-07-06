@@ -1,54 +1,55 @@
 #!/usr/bin/env node
 
 import { execSync } from "child_process";
+import { Command } from "commander";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { cwd } from "process";
-import yargs from "yargs";
-import { hideBin } from "yargs/helpers";
+import { argv, cwd } from "process";
 import { Config } from "./utils/build";
 import { init } from "./utils/init";
 
-const main = async (argv: any) => {
-	if (argv.hasOwnProperty("init")) {
+const cli = new Command();
+
+cli
+	.command("init")
+	.description("Initialize configuration files")
+	.alias("i")
+	.action(() => {
 		try {
 			init();
 			console.log("> Initialized successfully");
 		} catch (error) {
 			console.log("> initialization Failed");
 		}
-	}
+	});
 
-	if (argv.hasOwnProperty("build")) {
+cli
+	.command("build")
+	.description("Builds an executable file with pkg")
+	.alias("b")
+	.option("-c, --config <filepath>", "config file to use", "./pkg.config.json")
+	.action(args => {
 		console.log("> Starting Build");
 		try {
-			const configFilePath = join(cwd(), argv.config);
+			const configFilePath = join(cwd(), args.config);
 			const configRaw = readFileSync(configFilePath, "utf8");
 			const config: Config = JSON.parse(configRaw);
 
-			if (config.pkgcache) {
-				process.env.PKG_CACHE_PATH = join(cwd(), config.pkgcache);
+			if (config.pkg.cache) {
+				process.env.PKG_CACHE_PATH = join(cwd(), config.pkg.cache);
 			}
 
 			execSync(
-				`node \"${join(__dirname, "../bin/libs/build.js")}\" -c ${argv.config}`,
+				`node \"${join(__dirname, "../bin/cli/build.js")}\" -c ${args.config}`,
 				{
 					env: process.env,
-					...(argv.debug ? { stdio: "inherit" } : {}),
+					...(args.debug ? { stdio: "inherit" } : {}),
 				}
 			);
 			console.log("> Build Successful");
 		} catch (error) {
 			console.log("> Build Failed");
 		}
-	}
-};
+	});
 
-const argv: any = yargs(hideBin(process.argv)).option({
-	init: { alias: "i" },
-	build: { alias: "b" },
-	config: { type: "string", alias: "c", default: "./pkg.config.json" },
-	debug: { type: "boolean", alias: "d" },
-}).argv;
-
-main(argv);
+cli.parse(argv);

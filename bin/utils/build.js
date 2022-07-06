@@ -68,8 +68,8 @@ const build = (configFilePath) => __awaiter(void 0, void 0, void 0, function* ()
     yield (0, pkg_1.exec)([
         "--build",
         "--compress",
-        ...(checkCompression(config.pkgcompression)
-            ? [config.pkgcompression]
+        ...(checkCompression(config.pkg.compression)
+            ? [config.pkg.compression]
             : []),
         "--config",
         `${configFilePath}`,

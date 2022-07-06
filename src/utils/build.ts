@@ -16,9 +16,9 @@ export interface Config {
 		targets: string[];
 		outputPath: string;
 		assets: string[];
+		cache?: string;
+		compression?: string;
 	};
-	pkgcache?: string;
-	pkgcompression?: string;
 }
 
 export const build = async (configFilePath: string) => {
@@ -122,8 +122,8 @@ export const build = async (configFilePath: string) => {
 	await exec([
 		"--build",
 		"--compress",
-		...(checkCompression(config.pkgcompression)
-			? [config.pkgcompression!]
+		...(checkCompression(config.pkg.compression)
+			? [config.pkg.compression!]
 			: []),
 		"--config",
 		`${configFilePath}`,
