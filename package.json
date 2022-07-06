@@ -1,6 +1,6 @@
 {
   "name": "@tanishqmanuja/pkg-exe",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A tool for making resedit-able exe using @vercel/pkg",
   "main": "bin/index.js",
   "bin": {
