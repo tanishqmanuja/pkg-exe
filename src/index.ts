@@ -28,8 +28,9 @@ cli
 	.description("Builds an executable file with pkg")
 	.alias("b")
 	.option("-c, --config <filepath>", "config file to use", "./pkg.config.json")
+	.option("-d, --debug", "output debug logs")
 	.action(args => {
-		console.log("> Starting Build");
+		console.log("> Build Started");
 		try {
 			const configFilePath = join(cwd(), args.config);
 			const configRaw = readFileSync(configFilePath, "utf8");
