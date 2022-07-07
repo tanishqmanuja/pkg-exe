@@ -9,8 +9,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.build = exports.patchWinExe = exports.parseTarget = void 0;
+exports.build = exports.patchWinExe = exports.isTargetWindows = exports.parseTarget = void 0;
 const fs_1 = require("fs");
+const promises_1 = require("fs/promises");
 const path_1 = require("path");
 const pkg_1 = require("pkg");
 const pkg_fetch_1 = require("pkg-fetch");
@@ -24,6 +25,10 @@ const parseTarget = (targetStr) => {
     };
 };
 exports.parseTarget = parseTarget;
+const isTargetWindows = (target) => {
+    return target.platform.startsWith("win");
+};
+exports.isTargetWindows = isTargetWindows;
 const patchWinExe = (exePath, config) => {
     const { icon, version, description, company, name, copyright } = config;
     console.log("> Read EXE");
@@ -66,9 +71,13 @@ const build = (configFilePath) => __awaiter(void 0, void 0, void 0, function* ()
     const configRaw = (0, fs_1.readFileSync)(configFilePath, "utf8");
     const config = JSON.parse(configRaw);
     const { pkg, file } = config;
-    const targets = pkg.targets.filter(target => (0, exports.parseTarget)(target).platform.substring(0, 3) === "win");
+    const cachePath = (0, path_1.join)(process.env["PKG_CACHE_PATH"], ".temp-configs");
+    const winConfigFilePath = (0, path_1.join)(cachePath, "win.config.json");
+    const nonWinConfigFilePath = (0, path_1.join)(cachePath, "nonwin.config.json");
+    const winTargets = pkg.targets.filter(t => (0, exports.isTargetWindows)((0, exports.parseTarget)(t)));
+    const nonWinTargets = pkg.targets.filter(t => !(0, exports.isTargetWindows)((0, exports.parseTarget)(t)));
     console.log("> Download Binaries");
-    for (const t of targets) {
+    for (const t of pkg.targets) {
         const target = (0, exports.parseTarget)(t);
         const fetchedPath = yield (0, pkg_fetch_1.need)({
             nodeRange: target.nodeRange,
@@ -78,19 +87,46 @@ const build = (configFilePath) => __awaiter(void 0, void 0, void 0, function* ()
             forceFetch: true,
             dryRun: false,
         });
-        (0, exports.patchWinExe)(fetchedPath, config);
+        if ((0, exports.isTargetWindows)(target)) {
+            (0, exports.patchWinExe)(fetchedPath, config);
+        }
     }
     console.log("> Bundling App");
     const checkCompression = (str) => (str === null || str === void 0 ? void 0 : str.toLowerCase()) === "gzip" || (str === null || str === void 0 ? void 0 : str.toLowerCase()) === "brotli";
-    yield (0, pkg_1.exec)([
-        "--build",
-        "--compress",
-        ...(checkCompression(config.pkg.compression)
-            ? [config.pkg.compression]
-            : []),
-        "--config",
-        `${configFilePath}`,
-        `${file}`,
-    ]);
+    if (!(0, fs_1.existsSync)(cachePath)) {
+        yield (0, promises_1.mkdir)(cachePath, { recursive: true });
+    }
+    if (winTargets.length > 0) {
+        (0, fs_1.writeFileSync)(winConfigFilePath, JSON.stringify({
+            name: config.name,
+            pkg: Object.assign(Object.assign({}, config.pkg), { targets: winTargets }),
+        }));
+        yield (0, pkg_1.exec)([
+            "--build",
+            "--compress",
+            ...(checkCompression(config.pkg.compression)
+                ? [config.pkg.compression]
+                : []),
+            "--config",
+            `${winConfigFilePath}`,
+            `${file}`,
+        ]);
+    }
+    if (nonWinTargets.length > 0) {
+        (0, fs_1.writeFileSync)(nonWinConfigFilePath, JSON.stringify({
+            name: config.name,
+            pkg: Object.assign(Object.assign({}, config.pkg), { targets: nonWinTargets }),
+        }));
+        yield (0, pkg_1.exec)([
+            "--compress",
+            ...(checkCompression(config.pkg.compression)
+                ? [config.pkg.compression]
+                : []),
+            "--config",
+            `${nonWinConfigFilePath}`,
+            `${file}`,
+        ]);
+    }
+    yield (0, promises_1.rm)(cachePath, { recursive: true, force: true });
 });
 exports.build = build;

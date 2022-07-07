@@ -50,6 +50,7 @@ cli
 			console.log("> Build Successful");
 		} catch (error) {
 			console.log("> Build Failed");
+			console.log(error);
 		}
 	});
 

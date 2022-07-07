@@ -1,4 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from "fs";
+import { mkdir, rm } from "fs/promises";
 import { join } from "path";
 import { exec } from "pkg";
 import { need } from "pkg-fetch";
@@ -28,6 +29,10 @@ export const parseTarget = (targetStr: string) => {
 		platform: targetOpts[1],
 		arch: targetOpts[2],
 	};
+};
+
+export const isTargetWindows = (target: { platform: string }) => {
+	return target.platform.startsWith("win");
 };
 
 export const patchWinExe = (exePath: string, config: Config) => {
@@ -113,13 +118,18 @@ export const build = async (configFilePath: string) => {
 
 	const { pkg, file } = config;
 
-	const targets = pkg.targets.filter(
-		target => parseTarget(target).platform.substring(0, 3) === "win"
+	const cachePath = join(process.env["PKG_CACHE_PATH"]!, ".temp-configs");
+	const winConfigFilePath = join(cachePath, "win.config.json");
+	const nonWinConfigFilePath = join(cachePath, "nonwin.config.json");
+
+	const winTargets = pkg.targets.filter(t => isTargetWindows(parseTarget(t)));
+	const nonWinTargets = pkg.targets.filter(
+		t => !isTargetWindows(parseTarget(t))
 	);
 
 	console.log("> Download Binaries");
 
-	for (const t of targets) {
+	for (const t of pkg.targets) {
 		const target = parseTarget(t);
 
 		const fetchedPath = await need({
@@ -131,7 +141,9 @@ export const build = async (configFilePath: string) => {
 			dryRun: false,
 		});
 
-		patchWinExe(fetchedPath, config);
+		if (isTargetWindows(target)) {
+			patchWinExe(fetchedPath, config);
+		}
 	}
 
 	console.log("> Bundling App");
@@ -139,14 +151,50 @@ export const build = async (configFilePath: string) => {
 	const checkCompression = (str: string | undefined) =>
 		str?.toLowerCase() === "gzip" || str?.toLowerCase() === "brotli";
 
-	await exec([
-		"--build",
-		"--compress",
-		...(checkCompression(config.pkg.compression)
-			? [config.pkg.compression!]
-			: []),
-		"--config",
-		`${configFilePath}`,
-		`${file}`,
-	]);
+	if (!existsSync(cachePath)) {
+		await mkdir(cachePath, { recursive: true });
+	}
+
+	if (winTargets.length > 0) {
+		writeFileSync(
+			winConfigFilePath,
+			JSON.stringify({
+				name: config.name,
+				pkg: { ...config.pkg, targets: winTargets },
+			})
+		);
+
+		await exec([
+			"--build",
+			"--compress",
+			...(checkCompression(config.pkg.compression)
+				? [config.pkg.compression!]
+				: []),
+			"--config",
+			`${winConfigFilePath}`,
+			`${file}`,
+		]);
+	}
+
+	if (nonWinTargets.length > 0) {
+		writeFileSync(
+			nonWinConfigFilePath,
+			JSON.stringify({
+				name: config.name,
+				pkg: { ...config.pkg, targets: nonWinTargets },
+			})
+		);
+
+		await exec([
+			"--compress",
+			...(checkCompression(config.pkg.compression)
+				? [config.pkg.compression!]
+				: []),
+			"--config",
+			`${nonWinConfigFilePath}`,
+			`${file}`,
+		]);
+	}
+
+	await rm(cachePath, { recursive: true, force: true });
 };

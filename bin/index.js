@@ -41,6 +41,7 @@ cli
     }
     catch (error) {
         console.log("> Build Failed");
+        console.log(error);
     }
 });
 cli.parse(process_1.argv);

@@ -1,6 +1,6 @@
 {
   "name": "@tanishqmanuja/pkg-up",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A tool for @vercel/pkg with resedit support",
   "main": "bin/index.js",
   "bin": {
