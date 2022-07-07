@@ -9,28 +9,25 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.build = void 0;
+exports.build = exports.patchWinExe = exports.parseTarget = void 0;
 const fs_1 = require("fs");
 const path_1 = require("path");
 const pkg_1 = require("pkg");
 const pkg_fetch_1 = require("pkg-fetch");
 const resedit_1 = require("resedit");
-const build = (configFilePath) => __awaiter(void 0, void 0, void 0, function* () {
-    const configRaw = (0, fs_1.readFileSync)(configFilePath, "utf8");
-    const config = JSON.parse(configRaw);
-    const { pkg, icon, version, description, company, name, copyright, file } = config;
-    const targets = pkg.targets[0].split("-");
-    console.log("> Download Binaries");
-    const fetchedPath = yield (0, pkg_fetch_1.need)({
-        nodeRange: targets[0],
-        platform: targets[1],
-        arch: targets[2],
-        forceBuild: false,
-        forceFetch: true,
-        dryRun: false,
-    });
+const parseTarget = (targetStr) => {
+    const targetOpts = targetStr.split("-");
+    return {
+        nodeRange: targetOpts[0],
+        platform: targetOpts[1],
+        arch: targetOpts[2],
+    };
+};
+exports.parseTarget = parseTarget;
+const patchWinExe = (exePath, config) => {
+    const { icon, version, description, company, name, copyright } = config;
     console.log("> Read EXE");
-    const data = (0, fs_1.readFileSync)(fetchedPath);
+    const data = (0, fs_1.readFileSync)(exePath);
     const exe = resedit_1.NtExecutable.from(data);
     const res = resedit_1.NtExecutableResource.from(exe);
     const viList = resedit_1.Resource.VersionInfo.fromEntries(res.entries);
@@ -61,8 +58,28 @@ const build = (configFilePath) => __awaiter(void 0, void 0, void 0, function* ()
     console.log("> Generate EXE");
     const newBinary = exe.generate();
     console.log("> Save EXE");
-    const builtPath = fetchedPath.replace("fetched", "built");
+    const builtPath = exePath.replace("fetched", "built");
     (0, fs_1.writeFileSync)(builtPath, Buffer.from(newBinary));
+};
+exports.patchWinExe = patchWinExe;
+const build = (configFilePath) => __awaiter(void 0, void 0, void 0, function* () {
+    const configRaw = (0, fs_1.readFileSync)(configFilePath, "utf8");
+    const config = JSON.parse(configRaw);
+    const { pkg, file } = config;
+    const targets = pkg.targets.filter(target => (0, exports.parseTarget)(target).platform.substring(0, 3) === "win");
+    console.log("> Download Binaries");
+    for (const t of targets) {
+        const target = (0, exports.parseTarget)(t);
+        const fetchedPath = yield (0, pkg_fetch_1.need)({
+            nodeRange: target.nodeRange,
+            platform: target.platform,
+            arch: target.arch,
+            forceBuild: false,
+            forceFetch: true,
+            dryRun: false,
+        });
+        (0, exports.patchWinExe)(fetchedPath, config);
+    }
     console.log("> Bundling App");
     const checkCompression = (str) => (str === null || str === void 0 ? void 0 : str.toLowerCase()) === "gzip" || (str === null || str === void 0 ? void 0 : str.toLowerCase()) === "brotli";
     yield (0, pkg_1.exec)([

@@ -1,11 +1,11 @@
 {
-  "name": "@tanishqmanuja/pkg-exe",
-  "version": "1.0.2",
-  "description": "A tool for making resedit-able exe using @vercel/pkg",
+  "name": "@tanishqmanuja/pkg-up",
+  "version": "1.0.3",
+  "description": "A tool for @vercel/pkg with resedit support",
   "main": "bin/index.js",
   "bin": {
-    "pkg-exe": "bin/index.js",
-    "@tanishqmanuja/pkg-exe": "bin/index.js"
+    "pkg-up": "bin/index.js",
+    "@tanishqmanuja/pkg-up": "bin/index.js"
   },
   "scripts": {
     "start": "node bin/index.js",

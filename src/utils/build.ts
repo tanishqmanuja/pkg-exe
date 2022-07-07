@@ -21,29 +21,21 @@ export interface Config {
 	};
 }
 
-export const build = async (configFilePath: string) => {
-	const configRaw = readFileSync(configFilePath, "utf8");
-	const config: Config = JSON.parse(configRaw);
+export const parseTarget = (targetStr: string) => {
+	const targetOpts = targetStr.split("-");
+	return {
+		nodeRange: targetOpts[0],
+		platform: targetOpts[1],
+		arch: targetOpts[2],
+	};
+};
 
-	const { pkg, icon, version, description, company, name, copyright, file } =
-		config;
-
-	const targets = pkg.targets[0].split("-");
-
-	console.log("> Download Binaries");
-
-	const fetchedPath = await need({
-		nodeRange: targets[0],
-		platform: targets[1],
-		arch: targets[2],
-		forceBuild: false,
-		forceFetch: true,
-		dryRun: false,
-	});
+export const patchWinExe = (exePath: string, config: Config) => {
+	const { icon, version, description, company, name, copyright } = config;
 
 	console.log("> Read EXE");
 
-	const data = readFileSync(fetchedPath);
+	const data = readFileSync(exePath);
 	const exe = NtExecutable.from(data);
 	const res = NtExecutableResource.from(exe);
 	const viList = Resource.VersionInfo.fromEntries(res.entries);
@@ -111,8 +103,36 @@ export const build = async (configFilePath: string) => {
 
 	console.log("> Save EXE");
 
-	const builtPath = fetchedPath.replace("fetched", "built");
+	const builtPath = exePath.replace("fetched", "built");
 	writeFileSync(builtPath, Buffer.from(newBinary));
+};
+
+export const build = async (configFilePath: string) => {
+	const configRaw = readFileSync(configFilePath, "utf8");
+	const config: Config = JSON.parse(configRaw);
+
+	const { pkg, file } = config;
+
+	const targets = pkg.targets.filter(
+		target => parseTarget(target).platform.substring(0, 3) === "win"
+	);
+
+	console.log("> Download Binaries");
+
+	for (const t of targets) {
+		const target = parseTarget(t);
+
+		const fetchedPath = await need({
+			nodeRange: target.nodeRange,
+			platform: target.platform,
+			arch: target.arch,
+			forceBuild: false,
+			forceFetch: true,
+			dryRun: false,
+		});
+
+		patchWinExe(fetchedPath, config);
+	}
 
 	console.log("> Bundling App");
 
