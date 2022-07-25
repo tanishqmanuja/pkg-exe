@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.build = exports.patchWinExe = exports.isTargetWindows = exports.parseTarget = void 0;
 const fs_1 = require("fs");
 const promises_1 = require("fs/promises");
+const hidefile_1 = require("hidefile");
 const path_1 = require("path");
 const pkg_1 = require("pkg");
 const pkg_fetch_1 = require("pkg-fetch");
@@ -72,8 +73,8 @@ const build = (configFilePath) => __awaiter(void 0, void 0, void 0, function* ()
     const config = JSON.parse(configRaw);
     const { pkg, file } = config;
     const cachePath = (0, path_1.join)(process.env["PKG_CACHE_PATH"], ".temp-configs");
-    const winConfigFilePath = (0, path_1.join)(cachePath, "win.config.json");
-    const nonWinConfigFilePath = (0, path_1.join)(cachePath, "nonwin.config.json");
+    const winConfigFilePath = (0, hidefile_1.hideSync)((0, path_1.join)(cachePath, "win.temp.config.json"));
+    const nonWinConfigFilePath = (0, hidefile_1.hideSync)((0, path_1.join)(cachePath, "nonwin.temp.config.json"));
     const winTargets = pkg.targets.filter(t => (0, exports.isTargetWindows)((0, exports.parseTarget)(t)));
     const nonWinTargets = pkg.targets.filter(t => !(0, exports.isTargetWindows)((0, exports.parseTarget)(t)));
     console.log("> Download Binaries");
