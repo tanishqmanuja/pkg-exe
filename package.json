@@ -15,8 +15,7 @@
     "start": "node bin/index.js",
     "start:dev": "ts-node src/index.ts",
     "dev": "nodemon src/index.ts",
-    "build": "tsc -p .",
-    "publish": "npm publish --access='public'"
+    "build": "tsc -p ."
   },
   "keywords": [
     "pkg",
