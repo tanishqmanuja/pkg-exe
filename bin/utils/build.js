@@ -16,6 +16,7 @@ const hidefile_1 = require("hidefile");
 const path_1 = require("path");
 const pkg_1 = require("pkg");
 const pkg_fetch_1 = require("pkg-fetch");
+const process_1 = require("process");
 const resedit_1 = require("resedit");
 const parseTarget = (targetStr) => {
     const targetOpts = targetStr.split("-");
@@ -72,9 +73,8 @@ const build = (configFilePath) => __awaiter(void 0, void 0, void 0, function* ()
     const configRaw = (0, fs_1.readFileSync)(configFilePath, "utf8");
     const config = JSON.parse(configRaw);
     const { pkg, file } = config;
-    const cachePath = (0, path_1.join)(process.env["PKG_CACHE_PATH"], ".temp-configs");
-    const winConfigFilePath = (0, hidefile_1.hideSync)((0, path_1.join)(cachePath, "win.temp.config.json"));
-    const nonWinConfigFilePath = (0, hidefile_1.hideSync)((0, path_1.join)(cachePath, "nonwin.temp.config.json"));
+    const winConfigFilePath = (0, hidefile_1.hideSync)((0, path_1.join)((0, process_1.cwd)(), "win.temp.config.json"));
+    const nonWinConfigFilePath = (0, hidefile_1.hideSync)((0, path_1.join)((0, process_1.cwd)(), "nonwin.temp.config.json"));
     const winTargets = pkg.targets.filter(t => (0, exports.isTargetWindows)((0, exports.parseTarget)(t)));
     const nonWinTargets = pkg.targets.filter(t => !(0, exports.isTargetWindows)((0, exports.parseTarget)(t)));
     console.log("> Download Binaries");
@@ -94,9 +94,6 @@ const build = (configFilePath) => __awaiter(void 0, void 0, void 0, function* ()
     }
     console.log("> Bundling App");
     const checkCompression = (str) => (str === null || str === void 0 ? void 0 : str.toLowerCase()) === "gzip" || (str === null || str === void 0 ? void 0 : str.toLowerCase()) === "brotli";
-    if (!(0, fs_1.existsSync)(cachePath)) {
-        yield (0, promises_1.mkdir)(cachePath, { recursive: true });
-    }
     if (winTargets.length > 0) {
         (0, fs_1.writeFileSync)(winConfigFilePath, JSON.stringify({
             name: config.name,
@@ -128,6 +125,7 @@ const build = (configFilePath) => __awaiter(void 0, void 0, void 0, function* ()
             `${file}`,
         ]);
     }
-    yield (0, promises_1.rm)(cachePath, { recursive: true, force: true });
+    yield (0, promises_1.rm)(winConfigFilePath, { recursive: true, force: true });
+    yield (0, promises_1.rm)(nonWinConfigFilePath, { recursive: true, force: true });
 });
 exports.build = build;
