@@ -1,6 +1,6 @@
 {
   "name": "@tanishqmanuja/pkg-up",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "A tool for @vercel/pkg with resedit support",
   "main": "bin/index.js",
   "bin": {
@@ -15,7 +15,8 @@
     "start": "node bin/index.js",
     "start:dev": "ts-node src/index.ts",
     "dev": "nodemon src/index.ts",
-    "build": "tsc -p ."
+    "build": "tsc -p .",
+    "publish": "npm publish --access='public'"
   },
   "keywords": [
     "pkg",
