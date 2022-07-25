@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { mkdir, rm } from "fs/promises";
+import { hideSync } from "hidefile";
 import { join } from "path";
 import { exec } from "pkg";
 import { need } from "pkg-fetch";
@@ -119,8 +120,10 @@ export const build = async (configFilePath: string) => {
 	const { pkg, file } = config;
 
 	const cachePath = join(process.env["PKG_CACHE_PATH"]!, ".temp-configs");
-	const winConfigFilePath = join(cachePath, "win.config.json");
-	const nonWinConfigFilePath = join(cachePath, "nonwin.config.json");
+	const winConfigFilePath = hideSync(join(cachePath, "win.temp.config.json"));
+	const nonWinConfigFilePath = hideSync(
+		join(cachePath, "nonwin.temp.config.json")
+	);
 
 	const winTargets = pkg.targets.filter(t => isTargetWindows(parseTarget(t)));
 	const nonWinTargets = pkg.targets.filter(
