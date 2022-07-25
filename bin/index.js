@@ -33,7 +33,7 @@ cli
         const configFilePath = (0, path_1.join)((0, process_1.cwd)(), args.config);
         const configRaw = (0, fs_1.readFileSync)(configFilePath, "utf8");
         const config = JSON.parse(configRaw);
-        if (config.pkg.cache) {
+        if (config.pkg.cache && config.pkg.cache !== "default") {
             process.env.PKG_CACHE_PATH = (0, path_1.join)((0, process_1.cwd)(), config.pkg.cache);
         }
         (0, child_process_1.execSync)(`node \"${(0, path_1.join)(__dirname, "../bin/cli/build.js")}\" -c ${args.config}`, Object.assign({ env: process.env }, (args.debug ? { stdio: "inherit" } : {})));

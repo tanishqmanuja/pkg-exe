@@ -36,7 +36,7 @@ cli
 			const configRaw = readFileSync(configFilePath, "utf8");
 			const config: Config = JSON.parse(configRaw);
 
-			if (config.pkg.cache) {
+			if (config.pkg.cache && config.pkg.cache !== "default") {
 				process.env.PKG_CACHE_PATH = join(cwd(), config.pkg.cache);
 			}
 
