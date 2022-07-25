@@ -73,8 +73,8 @@ const build = (configFilePath) => __awaiter(void 0, void 0, void 0, function* ()
     const configRaw = (0, fs_1.readFileSync)(configFilePath, "utf8");
     const config = JSON.parse(configRaw);
     const { pkg, file } = config;
-    const winConfigFilePath = (0, hidefile_1.hideSync)((0, path_1.join)((0, process_1.cwd)(), "win.temp.config.json"));
-    const nonWinConfigFilePath = (0, hidefile_1.hideSync)((0, path_1.join)((0, process_1.cwd)(), "nonwin.temp.config.json"));
+    const winConfigFilePath = (0, path_1.join)((0, process_1.cwd)(), "win.temp.config.json");
+    const nonWinConfigFilePath = (0, path_1.join)((0, process_1.cwd)(), "nonwin.temp.config.json");
     const winTargets = pkg.targets.filter(t => (0, exports.isTargetWindows)((0, exports.parseTarget)(t)));
     const nonWinTargets = pkg.targets.filter(t => !(0, exports.isTargetWindows)((0, exports.parseTarget)(t)));
     console.log("> Download Binaries");
@@ -99,6 +99,7 @@ const build = (configFilePath) => __awaiter(void 0, void 0, void 0, function* ()
             name: config.name,
             pkg: Object.assign(Object.assign({}, config.pkg), { targets: winTargets }),
         }));
+        const winConfigHiddenFilePath = (0, hidefile_1.hideSync)(winConfigFilePath);
         yield (0, pkg_1.exec)([
             "--build",
             "--compress",
@@ -106,26 +107,27 @@ const build = (configFilePath) => __awaiter(void 0, void 0, void 0, function* ()
                 ? [config.pkg.compression]
                 : []),
             "--config",
-            `${winConfigFilePath}`,
+            `${winConfigHiddenFilePath}`,
             `${file}`,
         ]);
+        yield (0, promises_1.rm)(winConfigHiddenFilePath, { recursive: true, force: true });
     }
     if (nonWinTargets.length > 0) {
         (0, fs_1.writeFileSync)(nonWinConfigFilePath, JSON.stringify({
             name: config.name,
             pkg: Object.assign(Object.assign({}, config.pkg), { targets: nonWinTargets }),
         }));
+        const nonWinConfigHiddenFilePath = (0, hidefile_1.hideSync)(nonWinConfigFilePath);
         yield (0, pkg_1.exec)([
             "--compress",
             ...(checkCompression(config.pkg.compression)
                 ? [config.pkg.compression]
                 : []),
             "--config",
-            `${nonWinConfigFilePath}`,
+            `${nonWinConfigHiddenFilePath}`,
             `${file}`,
         ]);
+        yield (0, promises_1.rm)(nonWinConfigHiddenFilePath, { recursive: true, force: true });
     }
-    yield (0, promises_1.rm)(winConfigFilePath, { recursive: true, force: true });
-    yield (0, promises_1.rm)(nonWinConfigFilePath, { recursive: true, force: true });
 });
 exports.build = build;

@@ -120,8 +120,8 @@ export const build = async (configFilePath: string) => {
 
 	const { pkg, file } = config;
 
-	const winConfigFilePath = hideSync(join(cwd(), "win.temp.config.json"));
-	const nonWinConfigFilePath = hideSync(join(cwd(), "nonwin.temp.config.json"));
+	const winConfigFilePath = join(cwd(), "win.temp.config.json");
+	const nonWinConfigFilePath = join(cwd(), "nonwin.temp.config.json");
 
 	const winTargets = pkg.targets.filter(t => isTargetWindows(parseTarget(t)));
 	const nonWinTargets = pkg.targets.filter(
@@ -161,6 +161,8 @@ export const build = async (configFilePath: string) => {
 			})
 		);
 
+		const winConfigHiddenFilePath = hideSync(winConfigFilePath);
+
 		await exec([
 			"--build",
 			"--compress",
@@ -168,9 +170,11 @@ export const build = async (configFilePath: string) => {
 				? [config.pkg.compression!]
 				: []),
 			"--config",
-			`${winConfigFilePath}`,
+			`${winConfigHiddenFilePath}`,
 			`${file}`,
 		]);
+
+		await rm(winConfigHiddenFilePath, { recursive: true, force: true });
 	}
 
 	if (nonWinTargets.length > 0) {
@@ -182,17 +186,18 @@ export const build = async (configFilePath: string) => {
 			})
 		);
 
+		const nonWinConfigHiddenFilePath = hideSync(nonWinConfigFilePath);
+
 		await exec([
 			"--compress",
 			...(checkCompression(config.pkg.compression)
 				? [config.pkg.compression!]
 				: []),
 			"--config",
-			`${nonWinConfigFilePath}`,
+			`${nonWinConfigHiddenFilePath}`,
 			`${file}`,
 		]);
-	}
 
-	await rm(winConfigFilePath, { recursive: true, force: true });
-	await rm(nonWinConfigFilePath, { recursive: true, force: true });
+		await rm(nonWinConfigHiddenFilePath, { recursive: true, force: true });
+	}
 };
